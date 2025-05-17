@@ -5,8 +5,11 @@ import { Footer } from '@/components/footer'
 import { WaitlistForm } from '@/components/WaitlistForm'
 import { ArrowRight, Sparkles, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 export default function Home() {
+  const showMVP = process.env.SHOW_MVP === "true"
+
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex-1">
@@ -29,6 +32,15 @@ export default function Home() {
               You&apos;ve got the spark. But sometimes your message misses. Crisp helps you close the gap.
             </p>
             <div className="flex flex-col gap-4 min-[400px]:flex-row">
+              {showMVP && (
+                <Link
+                  href="/practice"
+                  className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
+                >
+                  Try the Demo
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Link>
+              )}
               <a
                 href="#waitlist"
                 className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
