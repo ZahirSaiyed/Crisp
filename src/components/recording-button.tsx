@@ -4,7 +4,6 @@ import * as React from 'react'
 import { Button } from '@/components/ui/button'
 import { Mic, Pause, Square, Play } from 'lucide-react'
 import { useRecording } from '@/contexts/recording-context'
-import { cn } from '@/lib/utils'
 
 export function RecordingButton() {
   const { 
@@ -28,23 +27,7 @@ export function RecordingButton() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const isRecording = status === 'recording'
-  const isPaused = status === 'paused'
   const hasError = status === 'error'
-
-  const handleClick = () => {
-    if (!isRecording && !isPaused) {
-      startRecording()
-    } else if (isPaused) {
-      resumeRecording()
-    } else {
-      pauseRecording()
-    }
-  }
-
-  const handleStop = () => {
-    stopRecording()
-  }
 
   if (!mounted) {
     return null
