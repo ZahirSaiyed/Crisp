@@ -7,6 +7,41 @@ interface DeepgramError extends Error {
   };
 }
 
+interface DeepgramWord {
+  word: string;
+  start: number;
+  end: number;
+  confidence: number;
+  filler_word?: boolean;
+}
+
+interface DeepgramUtterance {
+  transcript: string;
+  start: number;
+  end: number;
+  confidence: number;
+}
+
+interface DeepgramAlternative {
+  transcript: string;
+  words: DeepgramWord[];
+}
+
+interface DeepgramChannel {
+  alternatives: DeepgramAlternative[];
+}
+
+interface DeepgramResult {
+  channels: DeepgramChannel[];
+  utterances?: DeepgramUtterance[];
+}
+
+interface DeepgramResponse {
+  result?: {
+    results?: DeepgramResult;
+  };
+}
+
 // Initialize Deepgram client
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY || '')
 
@@ -47,14 +82,22 @@ export async function POST(req: Request) {
         model: 'nova-2',
         language: 'en-US',
         punctuate: true,
+        filler_words: true,
+        utterances: true
       }
-    )
+    ) as DeepgramResponse
 
     console.log('Deepgram response:', JSON.stringify(response, null, 2))
 
-    // Extract transcript using the correct property path
-    const transcript = response.result?.results?.channels[0]?.alternatives[0]?.transcript
-    console.log('Extracted transcript:', JSON.stringify(transcript));
+    // Extract transcript and additional information
+    const result = response.result?.results?.channels[0]?.alternatives[0]
+    const transcript = result?.transcript
+    const words = result?.words || []
+    const utterances = response.result?.results?.utterances || []
+
+    console.log('Extracted transcript:', JSON.stringify(transcript))
+    console.log('Words with filler markers:', JSON.stringify(words))
+    console.log('Utterances:', JSON.stringify(utterances))
 
     if (!transcript || !transcript.trim()) {
       console.error('No transcript in response:', response)
@@ -64,7 +107,24 @@ export async function POST(req: Request) {
       )
     }
 
-    return NextResponse.json({ transcript: transcript.trim() })
+    // Process filler words and create a more detailed response
+    const fillerWords = words.filter(word => word.filler_word).map(word => ({
+      word: word.word,
+      start: word.start,
+      end: word.end,
+      confidence: word.confidence
+    }))
+
+    return NextResponse.json({ 
+      transcript: transcript.trim(),
+      fillerWords,
+      utterances: utterances.map(u => ({
+        transcript: u.transcript,
+        start: u.start,
+        end: u.end,
+        confidence: u.confidence
+      }))
+    })
   } catch (error: unknown) {
     const deepgramError = error as DeepgramError
     console.error('Transcription error details:', {
