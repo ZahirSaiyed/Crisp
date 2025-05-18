@@ -1,219 +1,120 @@
 'use client'
 
-import * as React from 'react'
-import { useRecording } from '@/contexts/recording-context'
+import React from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Play, Pause, RotateCcw } from 'lucide-react'
 import { TranscriptAnalysis } from './transcript-analysis'
-import { Mic } from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
-import { motion } from 'framer-motion'
-import { FILLER_WORDS } from '@/lib/transcript-analysis'
+import { useRecording } from '@/contexts/recording-context'
 
-interface AudioPreviewProps {
-  onNewPrompt: () => void
-}
-
-export function AudioPreview({ onNewPrompt }: AudioPreviewProps) {
-  const { mediaBlobUrl, transcript, error, reset } = useRecording()
-  const [duration, setDuration] = useState(0)
-  const [lastMetrics, setLastMetrics] = useState<{ wpm: number; fillers: number } | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
+export function AudioPreview() {
+  const { mediaBlobUrl, audioBlob, transcript, fillerWords, utterances, volumeProfile, silenceDurations, duration, isAnalyzing, analysisError } = useRecording()
+  const [isPlaying, setIsPlaying] = React.useState(false)
+  const [currentTime, setCurrentTime] = React.useState(0)
   const audioRef = React.useRef<HTMLAudioElement>(null)
 
-  // Get duration directly from the audio blob
   React.useEffect(() => {
-    if (!mediaBlobUrl) return
-    const getDuration = async () => {
-      try {
-        const audioContext = new (window.AudioContext || ((window as unknown) as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-        const response = await fetch(mediaBlobUrl)
-        const arrayBuffer = await response.arrayBuffer()
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-        setDuration(audioBuffer.duration)
-        audioContext.close()
-      } catch (error) {
-        console.error('Error getting audio duration:', error)
-      }
-    }
-    getDuration()
-  }, [mediaBlobUrl])
-
-  const handleAnalyze = async () => {
-    if (!mediaBlobUrl) {
-      toast.error('No audio recording found')
-      return
-    }
-
-    setIsAnalyzing(true)
-
-    try {
-      const audioResponse = await fetch(mediaBlobUrl)
-      const audioBlob = await audioResponse.blob()
-      
-      const formData = new FormData()
-      formData.append('audio', audioBlob)
-
-      const transcribeResponse = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData,
+    if (audioRef.current) {
+      audioRef.current.addEventListener('timeupdate', () => {
+        setCurrentTime(audioRef.current?.currentTime || 0)
       })
-
-      const data = await transcribeResponse.json()
-
-      if (!transcribeResponse.ok) {
-        throw new Error(data.error || 'Failed to transcribe audio')
-      }
-
-      // Store current metrics before resetting
-      const words = data.transcript.split(/\s+/).length
-      const wpm = Math.round((words / duration) * 60)
-      const fillerCount = Object.values(FILLER_WORDS).reduce((sum, word) => {
-        const regex = new RegExp(`\\b${word}\\b`, 'gi')
-        const matches = data.transcript.match(regex)
-        return sum + (matches ? matches.length : 0)
-      }, 0)
-      setLastMetrics({ wpm, fillers: fillerCount })
-
-      // Reset recording state for next take
-      reset()
-      
-      // Show success message with improvement tip
-      toast.success('Ready for your next take!', {
-        description: lastMetrics ? 
-          `Last take: ${lastMetrics.wpm} WPM, ${lastMetrics.fillers} filler words. Try to ${wpm > lastMetrics.wpm ? 'slow down' : 'pick up the pace'} a bit.` :
-          'Focus on clear delivery and natural pauses.'
+      audioRef.current.addEventListener('ended', () => {
+        setIsPlaying(false)
+        setCurrentTime(0)
       })
+    }
+  }, [])
 
-    } catch (error) {
-      console.error('Transcription error:', error)
-      toast.error('Failed to transcribe audio')
-    } finally {
-      setIsAnalyzing(false)
+  const togglePlayback = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause()
+      } else {
+        audioRef.current.play()
+      }
+      setIsPlaying(!isPlaying)
     }
   }
 
-  // Show 'No Audio Detected' only if error is EMPTY_RECORDING
-  if (error === 'EMPTY_RECORDING') {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="rounded-full bg-muted p-4">
-          <Mic className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <div className="text-center">
-          <h3 className="text-lg font-medium">No Audio Detected</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            We couldn&apos;t detect any audio. Please try recording again or check your microphone.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onNewPrompt}>
-            Try Another Prompt
-          </Button>
-        </div>
-      </div>
-    )
+  const resetPlayback = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      setCurrentTime(0)
+      setIsPlaying(false)
+    }
   }
 
-  // Show other errors
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="rounded-full bg-destructive/10 p-4">
-          <Mic className="h-8 w-8 text-destructive" />
-        </div>
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-destructive">Something went wrong</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            {error}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onNewPrompt}>
-            Try Another Prompt
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
-  // Show main UI if transcript is available
-  if (!mediaBlobUrl || !transcript || !transcript.trim()) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="rounded-full bg-muted p-4">
-          <Mic className="h-8 w-8 text-muted-foreground animate-pulse" />
-        </div>
-        <div className="text-center">
-          <h3 className="text-lg font-medium">Processing your recording</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            We&apos;re analyzing your speech patterns and preparing feedback...
-          </p>
-        </div>
-      </div>
-    )
+  if (!audioBlob) {
+    return null
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col items-center gap-4">
-        <audio
-          ref={audioRef}
-          src={mediaBlobUrl}
-          controls
-          className="w-full max-w-md"
+      <Card>
+        <CardHeader>
+          <CardTitle>Audio Preview</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <audio ref={audioRef} src={mediaBlobUrl || undefined} />
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={togglePlayback}
+              >
+                {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={resetPlayback}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              <div className="flex-1">
+                <div className="h-2 bg-secondary rounded-full">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all"
+                    style={{ width: `${(currentTime / duration) * 100}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground mt-1">
+                  <span>{currentTime.toFixed(1)}s</span>
+                  <span>{duration.toFixed(1)}s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {isAnalyzing ? (
+        <Card>
+          <CardContent className="py-6">
+            <div className="text-center text-muted-foreground">
+              Analyzing your recording...
+            </div>
+          </CardContent>
+        </Card>
+      ) : analysisError ? (
+        <Card>
+          <CardContent className="py-6">
+            <div className="text-center text-destructive">
+              {analysisError}
+            </div>
+          </CardContent>
+        </Card>
+      ) : transcript ? (
+        <TranscriptAnalysis
+          transcript={transcript}
+          fillerWords={fillerWords}
+          utterances={utterances}
+          volumeProfile={volumeProfile}
+          silenceDurations={silenceDurations}
+          duration={duration}
         />
-      </div>
-
-      <TranscriptAnalysis
-        transcript={transcript}
-        duration={duration}
-      />
-
-      <div className="border-t border-border my-8" />
-
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex flex-col items-center gap-4"
-      >
-        <p className="text-sm text-muted-foreground text-center max-w-md">
-          Want to practice again or switch it up? Every take builds muscle.
-        </p>
-        {lastMetrics && (
-          <p className="text-xs text-muted-foreground/70">
-            Last take: {lastMetrics.wpm} WPM, {lastMetrics.fillers} filler words — let&apos;s tighten it up?
-          </p>
-        )}
-        <div className="flex gap-4">
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button 
-              variant="default" 
-              onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="bg-primary hover:bg-primary/90"
-            >
-              {isAnalyzing ? 'Analyzing...' : 'Practice This Prompt Again'}
-            </Button>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button 
-              variant="ghost" 
-              onClick={onNewPrompt}
-              className="hover:bg-secondary hover:text-secondary-foreground"
-            >
-              New Prompt
-            </Button>
-          </motion.div>
-        </div>
-      </motion.div>
+      ) : null}
     </div>
   )
 } 

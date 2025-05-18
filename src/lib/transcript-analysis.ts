@@ -24,9 +24,42 @@ export interface TranscriptMetrics {
     label: string;
     description: string;
   };
+  confidenceScore: number;
+  confidenceLabel: string;
+  utterances: {
+    transcript: string;
+    start: number;
+    end: number;
+    confidence: number;
+  }[];
+  fillerWords: {
+    word: string;
+    start: number;
+    end: number;
+    confidence: number;
+  }[];
+  volumeProfile: {
+    start: number;
+    end: number;
+    loudness: number;
+  }[];
+  silenceDurations: {
+    start: number;
+    end: number;
+    duration: number;
+  }[];
 }
 
-export function analyzeTranscript(transcript: string, duration: number): TranscriptMetrics {
+export function analyzeTranscript(
+  transcript: string, 
+  duration: number,
+  deepgramData?: {
+    utterances: { transcript: string; start: number; end: number; confidence: number }[];
+    fillerWords: { word: string; start: number; end: number; confidence: number }[];
+    volumeProfile?: { start: number; end: number; loudness: number }[];
+    silenceDurations?: { start: number; end: number; duration: number }[];
+  }
+): TranscriptMetrics {
   // Initialize filler word counts
   const fillerCount = Object.keys(FILLER_WORDS).reduce((acc, word) => {
     acc[word as keyof typeof FILLER_WORDS] = 0;
@@ -62,11 +95,50 @@ export function analyzeTranscript(transcript: string, duration: number): Transcr
   // Calculate total filler words
   const totalFillers = Object.values(fillerCount).reduce((sum, count) => sum + count, 0);
 
+  // Calculate confidence score (0-100)
+  const confidenceScore = (() => {
+    let score = 0;
+    
+    // WPM contribution (30 points)
+    if (wpm >= 110 && wpm <= 160) score += 30;
+    else if (wpm >= 90 && wpm <= 180) score += 20;
+    else if (wpm >= 70 && wpm <= 200) score += 10;
+    
+    // Filler words contribution (30 points)
+    if (totalFillers <= 2) score += 30;
+    else if (totalFillers <= 6) score += 20;
+    else if (totalFillers <= 10) score += 10;
+    
+    // Utterance confidence contribution (20 points)
+    if (deepgramData?.utterances) {
+      const avgConfidence = deepgramData.utterances.reduce((sum, u) => sum + u.confidence, 0) / deepgramData.utterances.length;
+      score += Math.round(avgConfidence * 20);
+    }
+    
+    // Volume consistency contribution (20 points)
+    if (deepgramData?.volumeProfile) {
+      const volumeVariance = calculateVolumeVariance(deepgramData.volumeProfile);
+      if (volumeVariance < 0.1) score += 20;
+      else if (volumeVariance < 0.2) score += 15;
+      else if (volumeVariance < 0.3) score += 10;
+    }
+    
+    return Math.min(100, score);
+  })();
+
+  // Determine confidence label
+  const confidenceLabel = (() => {
+    if (confidenceScore >= 90) return '🔥 Commanding';
+    if (confidenceScore >= 70) return '✨ Clear';
+    if (confidenceScore >= 50) return '🧠 Could Be Sharper';
+    return '😬 Uncertain';
+  })();
+
   // Determine delivery style based on pace
   const deliveryStyle = {
     slow: {
       label: 'Too Measured',
-      description: 'You may be coming across as hesitant. Try speaking a bit more naturally, as if you\'re explaining something to a colleague.'
+      description: 'Your pace was too measured — it might make you sound overly cautious. Try speaking a bit more naturally, as if you\'re explaining something to a colleague.'
     },
     ideal: {
       label: 'Clear & Controlled',
@@ -106,7 +178,22 @@ export function analyzeTranscript(transcript: string, duration: number): Transcr
     fillerCount,
     deliveryStyle,
     clarity,
+    confidenceScore,
+    confidenceLabel,
+    utterances: deepgramData?.utterances || [],
+    fillerWords: deepgramData?.fillerWords || [],
+    volumeProfile: deepgramData?.volumeProfile || [],
+    silenceDurations: deepgramData?.silenceDurations || [],
   };
+}
+
+function calculateVolumeVariance(volumeProfile: { loudness: number }[]): number {
+  if (volumeProfile.length === 0) return 0;
+  
+  const mean = volumeProfile.reduce((sum, v) => sum + v.loudness, 0) / volumeProfile.length;
+  const variance = volumeProfile.reduce((sum, v) => sum + Math.pow(v.loudness - mean, 2), 0) / volumeProfile.length;
+  
+  return variance;
 }
 
 export function highlightFillerWords(transcript: string): string {

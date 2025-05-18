@@ -6,6 +6,7 @@ import { WaitlistForm } from '@/components/WaitlistForm'
 import { ArrowRight, Sparkles, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import { ProductPreview } from '@/components/product-preview'
 
 export default function Home() {
   const showMVP = process.env.SHOW_MVP === "true"
@@ -56,14 +57,18 @@ export default function Home() {
                 </div>
               )}
               <a
-                href="#who-is-crisp"
+                href="#product-preview"
                 className="inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-14 px-10 hover:scale-105 hover:shadow-lg hover:shadow-accent/20"
               >
-                What is Crisp?
+                See How It Works
               </a>
             </div>
           </div>
         </div>
+
+        <ProductPreview />
+        <WhyItMatters />
+        <HowItWorks />
 
         <section id="who-is-crisp" className="w-full py-16 md:py-24 relative overflow-hidden">
           <div className="gradient-overlay" />
@@ -109,9 +114,6 @@ export default function Home() {
             </div>
           </div>
         </section>
-
-        <WhyItMatters />
-        <HowItWorks />
 
         <section id="waitlist" className="w-full py-24 md:py-32 relative overflow-hidden">
           <div className="gradient-overlay" />
