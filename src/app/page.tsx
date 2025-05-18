@@ -20,16 +20,16 @@ export default function Home() {
                 <Zap className="h-8 w-8 text-secondary" />
               </div>
               <h1 className="font-header text-5xl font-bold leading-tight tracking-tighter md:text-7xl lg:text-8xl lg:leading-[1.1] gradient-text">
-                You&apos;ve Got The Energy.
+                Speak with Impact.
                 <br />
-                Let&apos;s Make It Land.
+                Get Instant AI Feedback.
               </h1>
               <div className="absolute -right-6 -top-6 animate-pulse">
                 <Sparkles className="h-8 w-8 text-primary" />
               </div>
             </div>
             <p className="max-w-[700px] text-xl text-muted-foreground sm:text-2xl">
-              You&apos;ve got the spark. But sometimes your message misses. Crisp helps you close the gap.
+              Tired of filler words and fast talking? Get instant AI feedback to sound sharp, speak clearly, and own the room.
             </p>
             <div className="flex flex-col gap-4 min-[400px]:flex-row">
               {showMVP && (
@@ -37,17 +37,22 @@ export default function Home() {
                   href="/practice"
                   className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
                 >
-                  Try the Demo
+                  Try a Sample Prompt
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               )}
-              <a
-                href="#waitlist"
-                className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
-              >
-                Get Early Access 🔓
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </a>
+              <div className="flex flex-col items-center">
+                <a
+                  href="#waitlist"
+                  className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
+                >
+                  Get Early Access 🔓
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </a>
+                <small className="block text-muted-foreground text-sm mt-1">
+                  No sign-up hoops. Try it in under 30 seconds.
+                </small>
+              </div>
               <a
                 href="#who-is-crisp"
                 className="inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-14 px-10 hover:scale-105 hover:shadow-lg hover:shadow-accent/20"
