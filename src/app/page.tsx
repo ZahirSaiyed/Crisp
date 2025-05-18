@@ -41,18 +41,20 @@ export default function Home() {
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Link>
               )}
-              <div className="flex flex-col items-center">
-                <a
-                  href="#waitlist"
-                  className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
-                >
-                  Get Early Access 🔓
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                </a>
-                <small className="block text-muted-foreground text-sm mt-1">
-                  No sign-up hoops. Try it in under 30 seconds.
-                </small>
-              </div>
+              {!showMVP && (
+                <div className="flex flex-col items-center">
+                  <a
+                    href="#waitlist"
+                    className="group inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-gradient-to-r from-primary to-secondary text-primary-foreground shadow hover:opacity-90 h-14 px-10 hover:scale-105 hover:shadow-[0_0_20px_rgba(108,92,231,0.3)]"
+                  >
+                    Get Early Access 🔓
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </a>
+                  <small className="block text-muted-foreground text-sm mt-1">
+                    No sign-up hoops. Try it in under 30 seconds.
+                  </small>
+                </div>
+              )}
               <a
                 href="#who-is-crisp"
                 className="inline-flex items-center justify-center rounded-md text-lg font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-14 px-10 hover:scale-105 hover:shadow-lg hover:shadow-accent/20"
