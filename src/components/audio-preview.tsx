@@ -7,7 +7,11 @@ import { Play, Pause, RotateCcw } from 'lucide-react'
 import { TranscriptAnalysis } from './transcript-analysis'
 import { useRecording } from '@/contexts/recording-context'
 
-export function AudioPreview() {
+interface AudioPreviewProps {
+  onNewPrompt: () => void
+}
+
+export function AudioPreview({ onNewPrompt }: AudioPreviewProps) {
   const { mediaBlobUrl, audioBlob, transcript, fillerWords, utterances, volumeProfile, silenceDurations, duration, isAnalyzing, analysisError } = useRecording()
   const [isPlaying, setIsPlaying] = React.useState(false)
   const [currentTime, setCurrentTime] = React.useState(0)
@@ -84,6 +88,12 @@ export function AudioPreview() {
                   <span>{duration.toFixed(1)}s</span>
                 </div>
               </div>
+              <Button
+                variant="outline"
+                onClick={onNewPrompt}
+              >
+                New Prompt
+              </Button>
             </div>
           </div>
         </CardContent>

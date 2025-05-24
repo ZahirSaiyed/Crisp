@@ -44,6 +44,8 @@ interface RecordingContextType {
   elapsedTime: number
   startRecording: () => Promise<void>
   stopRecording: () => Promise<void>
+  pauseRecording: () => void
+  resumeRecording: () => void
   reset: () => void
 }
 
@@ -172,6 +174,26 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
     }
   }, [mediaRecorder])
 
+  const pauseRecording = useCallback(() => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.pause()
+      setStatus('paused')
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current)
+      }
+    }
+  }, [mediaRecorder])
+
+  const resumeRecording = useCallback(() => {
+    if (mediaRecorder && mediaRecorder.state === 'paused') {
+      mediaRecorder.resume()
+      setStatus('recording')
+      timerRef.current = window.setInterval(() => {
+        setElapsedTime(prev => prev + 1)
+      }, 1000)
+    }
+  }, [mediaRecorder])
+
   const reset = useCallback(() => {
     setMediaBlobUrl(null)
     setAudioBlob(null)
@@ -209,6 +231,8 @@ export function RecordingProvider({ children }: { children: React.ReactNode }) {
         elapsedTime,
         startRecording,
         stopRecording,
+        pauseRecording,
+        resumeRecording,
         reset,
       }}
     >
